@@ -1,0 +1,67 @@
+# Install needed libraries
+
+install.packages("dplyr")
+install.packages("tidyr")
+install.packages("dummies")
+
+# Open needed libraries
+
+library(dplyr)
+library(tidyr)
+library(dummies)
+
+# Load dataframe as "d"
+
+d <- read.csv("C:/Users/M/Desktop/R/3.1 Project 1/refine_original.csv")
+
+# Standardize company names one by one, search is not case sensitive
+
+d$company <- gsub("phillips|philips|phllips|phillps|fillips|phlips", "philips", d$company, ignore.case = TRUE) 
+
+d$company <- gsub("akzo|azk0|ak zo|akz0", "akzo", d$company, ignore.case = TRUE) 
+
+d$company <- gsub("van houten", "van houten", d$company, ignore.case = TRUE) 
+
+d$company <- gsub("unilver|unilever", "unilever", d$company, ignore.case = TRUE) 
+
+# Arrange data by company name
+
+arrange(d, company)
+
+# Separate the product code and numbers into individual columns using the seperate command and specifying the separator as"-"
+
+d <- separate(d, Product.code...number, c("product_code", "product_number"), sep = "-")
+
+# Create a new product_category column using the product_code column
+
+d <- cbind(d,product_category=rep(d$product_code))
+
+# Change product codes to product categories
+
+d$product_category <- gsub("p", "Smartphone", d$product_category, ignore.case = TRUE) 
+d$product_category <- gsub("v", "TV", d$product_category, ignore.case = TRUE) 
+d$product_category <- gsub("x", "Laptop", d$product_category, ignore.case = TRUE) 
+d$product_category <- gsub("q", "Tablet", d$product_category, ignore.case = TRUE) 
+
+# Unite the address information into 1 column and leave the original values in the table 
+
+d <- unite(d, full_address, "address" , "city", "country", sep = ",", remove = FALSE)
+
+# Create dummy variables
+
+dummy.company <- dummy.data.frame(d, dummy.class = "binary", names = "company", sep = "_")
+
+dummy.product.categories <- dummy.data.frame(d, dummy.class = "binary", names = "product_category", sep = "_")
+
+# Add dummy variables to dataframe "d"
+
+d <-left_join(d, dummy.company)
+d <-left_join(d, dummy.product.categories)
+
+# Print dataframe "d"
+
+print(d)
+
+# Write new .csv file
+
+write.csv(d, "refine_clean.csv")
